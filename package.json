@@ -1,0 +1,43 @@
+{
+  "name": "waterchat-micro-auth",
+  "version": "1.0.0",
+  "description": "waterchat message service",
+  "author": "Kalle Ott",
+  "repository": "kaoDev/waterchat-micro-auth",
+  "license": "MIT",
+  "scripts": {
+    "start": "tsc && node dist/index.js",
+    "test": "tsc -p ./tsconfig.test.json && ava ./test.dist/**/*.js"
+  },
+  "engines": {
+    "node": ">= 7"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "dependencies": {
+    "@types/node": "^7.0.13",
+    "@types/request-promise": "^4.1.33",
+    "@types/uuid": "^3.0.0",
+    "@types/ws": "^3.0.0",
+    "async-to-gen": "^1.3.2",
+    "ava": "^0.18.1",
+    "babel-polyfill": "^6.23.0",
+    "date-fns": "^1.28.5",
+    "node-eventstore-client": "^0.1.2",
+    "queueing-subject": "^0.1.1",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1",
+    "rxjs": "^5.4.0",
+    "rxjs-websockets": "^1.0.0",
+    "tslint": "^4.5.0",
+    "typescript": "^2.3",
+    "uuid": "^3.0.1",
+    "ws": "^3.0.0"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^3.0.1",
+    "utf-8-validate": "^3.0.2"
+  }
+}
