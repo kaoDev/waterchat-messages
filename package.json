@@ -18,6 +18,7 @@
   "main": "dist/index.js",
   "dependencies": {
     "@types/node": "^7.0.13",
+    "@types/query-string": "^4.3.1",
     "@types/request-promise": "^4.1.33",
     "@types/uuid": "^3.0.0",
     "@types/ws": "^3.0.0",
@@ -26,6 +27,7 @@
     "babel-polyfill": "^6.23.0",
     "date-fns": "^1.28.5",
     "node-eventstore-client": "^0.1.2",
+    "query-string": "^4.3.4",
     "queueing-subject": "^0.1.1",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",

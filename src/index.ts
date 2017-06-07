@@ -11,10 +11,11 @@ import { DisplayUser } from './model/User'
 import { MessageEvent, USER_LOGGED_IN, USER_LOGGED_OUT } from './events/Events'
 import { MessageCommand } from './events/Commands'
 import { createEventFromCommand } from './logic/CommandEventMapper'
+import { parse } from 'query-string'
 
-console.log('initializing micro-auth')
+console.log('initializing message service')
 
-const eventStoreConnectionPromise = initEventStoreConnection()
+const eventStoreConnectionPromise = initEventStoreConnection().catch(() => {})
 
 const unAuthorized = (
   done: (res: boolean, code?: number, message?: string) => void
@@ -22,11 +23,17 @@ const unAuthorized = (
   done(false, 401, 'invalid session')
 }
 
+const cleanQuery = (query: string = '') => {
+  if (query.indexOf('/?') === 0) {
+    return query.slice(2)
+  } else {
+    return query
+  }
+}
+
 const wss = new Server({
   verifyClient: async (info, done) => {
-    console.log('verify')
-    console.log(info.req.headers)
-    const sessionId = info.req.headers['sessionId']
+    const sessionId = parse(cleanQuery(info.req.url))
 
     if (
       sessionId === undefined ||
@@ -37,12 +44,15 @@ const wss = new Server({
       return
     } else {
       try {
-        await rp.get('https://office.cap3.de:57503/auth/isSessionValid', {
+        console.log('request validation')
+        await rp.get('http://micro-auth:3000/isSessionValid', {
           headers: { sessionId },
         })
+        console.log('validation success')
 
         done(true)
       } catch (e) {
+        console.log('validation error')
         unAuthorized(done)
       }
     }
