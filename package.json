@@ -1,9 +1,9 @@
 {
-  "name": "waterchat-micro-auth",
+  "name": "waterchat-messages",
   "version": "1.0.0",
   "description": "waterchat message service",
   "author": "Kalle Ott",
-  "repository": "kaoDev/waterchat-micro-auth",
+  "repository": "kaoDev/waterchat-messages",
   "license": "MIT",
   "scripts": {
     "start": "tsc && node dist/index.js",

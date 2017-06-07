@@ -24,6 +24,8 @@ const unAuthorized = (
 
 const wss = new Server({
   verifyClient: async (info, done) => {
+    console.log('verify')
+    console.log(info.req.headers)
     const sessionId = info.req.headers['sessionId']
 
     if (
@@ -45,6 +47,7 @@ const wss = new Server({
       }
     }
   },
+  port: 4000,
 })
 
 wss.on('connection', async (ws, req) => {
