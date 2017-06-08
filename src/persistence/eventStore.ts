@@ -98,13 +98,15 @@ export async function dispatchServiceEvent(
   channelName: string = PUBLIC_CHANNEL_ID
 ) {
   console.log('dispatching service event')
-  const eventId = uuid.v4()
+  const eventId = event.type === MESSAGE_RECEIVED ? event.messageId : uuid.v4()
   const storeEvent = esClient.createJsonEventData(
     eventId,
     event,
     null,
     event.type
   )
+
+  console.log(storeEvent.data.toJSON())
   console.log('Appending...')
 
   await serviceState

@@ -7,7 +7,11 @@ import { Server } from 'ws'
 import * as rp from 'request-promise'
 import { DisplayUser } from './model/User'
 import { PUBLIC_CHANNEL_ID } from './model/Channel'
-import { USER_LOGGED_IN, USER_LOGGED_OUT } from './events/Events'
+import {
+  USER_LOGGED_IN,
+  USER_LOGGED_OUT,
+  MESSAGE_RECEIVED,
+} from './events/Events'
 import { createEventFromCommand } from './logic/CommandEventMapper'
 import { parse } from 'query-string'
 
@@ -67,16 +71,12 @@ wss.on('connection', async (ws, req) => {
     console.log('new connection')
     await eventStoreConnectionPromise
     console.log('got eventstore connection')
-    console.log('request url', req.url)
 
     const cleanedQuery = cleanQuery(req.url)
-    console.log('cleaned query', cleanedQuery)
 
     const { sessionId } = parse(cleanedQuery) as { sessionId: string }
 
     console.log('got session id', sessionId)
-
-    console.log('fetching user for session')
 
     const user: DisplayUser = await rp.get(
       `http://micro-auth:3000/user/${sessionId}`
@@ -109,7 +109,11 @@ wss.on('connection', async (ws, req) => {
         const command = JSON.parse(message.data.toString())
         const event = createEventFromCommand(user)(command)
         if (event !== undefined) {
-          dispatchServiceEvent(event)
+          if (event.type === MESSAGE_RECEIVED) {
+            dispatchServiceEvent(event, event.channelId)
+          } else {
+            dispatchServiceEvent(event)
+          }
         } else {
           console.log('wrong command format', command)
         }
