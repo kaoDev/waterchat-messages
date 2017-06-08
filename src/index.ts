@@ -1,15 +1,13 @@
 import {
   initEventStoreConnection,
   dispatchServiceEvent,
+  serviceState,
 } from './persistence/eventStore'
 import { Server } from 'ws'
 import * as rp from 'request-promise'
-import websocketConnect from 'rxjs-websockets'
-import { QueueingSubject } from 'queueing-subject'
-import { Observable } from 'rxjs/Observable'
 import { DisplayUser } from './model/User'
-import { MessageEvent, USER_LOGGED_IN, USER_LOGGED_OUT } from './events/Events'
-import { MessageCommand } from './events/Commands'
+import { PUBLIC_CHANNEL_ID } from './model/Channel'
+import { USER_LOGGED_IN, USER_LOGGED_OUT } from './events/Events'
 import { createEventFromCommand } from './logic/CommandEventMapper'
 import { parse } from 'query-string'
 
@@ -62,27 +60,49 @@ const wss = new Server({
 
 wss.on('connection', async (ws, req) => {
   try {
+    console.log('new connection')
     await eventStoreConnectionPromise
+    console.log('got eventstore connection')
 
     const user: DisplayUser = await rp.get(
       `https://office.cap3.de:57503/auth/user/bySession/${req.headers[
         'sessionId'
       ]}`
     )
-    dispatchServiceEvent({
+
+    await dispatchServiceEvent({
       type: USER_LOGGED_IN,
       ...user,
     })
 
-    const input = new QueueingSubject<MessageEvent>()
-    const { messages } = websocketConnect('', input, url => ws) as {
-      connectionStatus: Observable<number>
-      messages: Observable<MessageCommand>
+    serviceState
+      .flatMap(state => state.activeChannels)
+      .do(() => console.log('got new service state'))
+      .filter(
+        channel =>
+          channel.userIds.some(id => id === user.userId) ||
+          channel.channelId === PUBLIC_CHANNEL_ID
+      )
+      .flatMap(channel => channel.messages)
+      .do(m => console.log('sending message to client', m))
+      .subscribe(
+        message => ws.send(JSON.stringify(message)),
+        e => console.error('error in channel subscription', e)
+      )
+
+    ws.onmessage = message => {
+      try {
+        const command = JSON.parse(message.data.toString())
+        const event = createEventFromCommand(user)(command)
+        if (event !== undefined) {
+          dispatchServiceEvent(event)
+        } else {
+          console.log('wrong command format', command)
+        }
+      } catch (e) {
+        console.error('error on message receive', e)
+      }
     }
-    messages
-      .map(createEventFromCommand(user))
-      .filter(event => event !== undefined)
-      .subscribe((event: MessageEvent) => dispatchServiceEvent(event))
 
     ws.onclose = event => {
       dispatchServiceEvent({

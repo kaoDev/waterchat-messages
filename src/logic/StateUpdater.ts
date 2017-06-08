@@ -92,7 +92,11 @@ const reduceActiveChannels = (
     case USER_LOGGED_IN:
       const newActiveChannels = await Promise.all(
         inactiveChannels
-          .filter(ch => ch.userIds.some(id => id === event.userId))
+          .filter(
+            ch =>
+              ch.userIds.some(id => id === event.userId) ||
+              (ch.channelId === PUBLIC_CHANNEL_ID && nextConnections.length > 0)
+          )
           .map(async ch => ({
             ...ch,
             messages: await createChannelSubscription(ch.channelId),

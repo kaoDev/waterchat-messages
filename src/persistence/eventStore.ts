@@ -16,7 +16,7 @@ const serviceEventStream = 'messageService'
 const messageChannelStream = (channelName: string) =>
   `messageService/channel/${channelName}`
 
-const host = 'eventstore'
+const host = 'localhost'
 const tcpPort = '1113'
 const httpPort = '2113'
 
@@ -41,8 +41,9 @@ export const createStreamSubscription = async (
 ) => {
   const connection = await initEventStoreConnection()
 
-  const storeSubscription = await connection.subscribeToStream(
+  const storeSubscription = await connection.subscribeToStreamFrom(
     streamName,
+    0,
     false,
     (subscription, event) => {
       if (
@@ -58,7 +59,7 @@ export const createStreamSubscription = async (
   )
 
   messageSubject.subscribe(undefined, undefined, () => {
-    storeSubscription.close()
+    storeSubscription.stop()
   })
 
   return messageSubject
@@ -96,6 +97,7 @@ export async function dispatchServiceEvent(
   event: MessageEvent,
   channelName: string = PUBLIC_CHANNEL_ID
 ) {
+  console.log('dispatching service event')
   const eventId = uuid.v4()
   const storeEvent = esClient.createJsonEventData(
     eventId,
