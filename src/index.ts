@@ -44,7 +44,7 @@ const wss = new Server({
       try {
         console.log('request validation for session ', sessionId)
         await rp.get('http://micro-auth:3000/isSessionValid', {
-          headers: { sessionId },
+          headers: sessionId,
         })
         console.log('validation success')
 
