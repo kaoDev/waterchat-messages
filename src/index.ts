@@ -42,7 +42,7 @@ const wss = new Server({
       return
     } else {
       try {
-        console.log('request validation')
+        console.log('request validation for session ', sessionId)
         await rp.get('http://micro-auth:3000/isSessionValid', {
           headers: { sessionId },
         })
@@ -50,7 +50,7 @@ const wss = new Server({
 
         done(true)
       } catch (e) {
-        console.log('validation error')
+        console.log('validation error', e)
         unAuthorized(done)
       }
     }
