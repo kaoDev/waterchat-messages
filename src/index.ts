@@ -79,7 +79,7 @@ wss.on('connection', async (ws, req) => {
     console.log('fetching user for session')
 
     const user: DisplayUser = await rp.get(
-      `http://micro-auth:3000/user/bySession/${sessionId}`
+      `http://micro-auth:3000/user/${sessionId}`
     )
 
     console.log('got user', user)
