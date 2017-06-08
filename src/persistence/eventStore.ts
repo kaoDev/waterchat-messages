@@ -16,7 +16,7 @@ const serviceEventStream = 'messageService'
 const messageChannelStream = (channelName: string) =>
   `messageService/channel/${channelName}`
 
-const host = 'localhost'
+const host = 'eventstore'
 const tcpPort = '1113'
 const httpPort = '2113'
 

@@ -64,10 +64,10 @@ wss.on('connection', async (ws, req) => {
     await eventStoreConnectionPromise
     console.log('got eventstore connection')
 
+    const sessionId = parse(cleanQuery(req.url))
+
     const user: DisplayUser = await rp.get(
-      `https://office.cap3.de:57503/auth/user/bySession/${req.headers[
-        'sessionId'
-      ]}`
+      `http://micro-auth:3000/user/bySession/${sessionId}`
     )
 
     await dispatchServiceEvent({
