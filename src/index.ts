@@ -22,7 +22,11 @@ const unAuthorized = (
 }
 
 const cleanQuery = (query: string = '') => {
+  console.log('CLEAN QUERY', query)
+
   if (query.indexOf('/?') === 0) {
+    console.log('remove query prefix')
+
     return query.slice(2)
   } else {
     return query
@@ -63,12 +67,22 @@ wss.on('connection', async (ws, req) => {
     console.log('new connection')
     await eventStoreConnectionPromise
     console.log('got eventstore connection')
+    console.log('request url', req.url)
 
-    const sessionId = parse(cleanQuery(req.url))
+    const cleanedQuery = cleanQuery(req.url)
+    console.log('cleaned query', cleanedQuery)
+
+    const sessionId = parse(cleanedQuery)
+
+    console.log('got session id', sessionId)
+
+    console.log('fetching user for session')
 
     const user: DisplayUser = await rp.get(
       `http://micro-auth:3000/user/bySession/${sessionId}`
     )
+
+    console.log('got user', user)
 
     await dispatchServiceEvent({
       type: USER_LOGGED_IN,
@@ -111,6 +125,7 @@ wss.on('connection', async (ws, req) => {
       })
     }
   } catch (e) {
+    console.error('unhandled error in websocket code', e)
     ws.close(500, 'internal server error')
   }
 })
