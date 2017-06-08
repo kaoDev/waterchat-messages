@@ -86,7 +86,8 @@ wss.on('connection', async (ws, req) => {
 
     await dispatchServiceEvent({
       type: USER_LOGGED_IN,
-      ...user,
+      userId: user.userId,
+      displayName: user.displayName,
     })
 
     serviceState

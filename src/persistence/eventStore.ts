@@ -106,7 +106,7 @@ export async function dispatchServiceEvent(
     event.type
   )
 
-  console.log(storeEvent.data.toJSON())
+  console.log(storeEvent.data.toString())
   console.log('Appending...')
 
   await serviceState
