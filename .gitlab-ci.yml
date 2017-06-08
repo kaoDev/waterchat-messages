@@ -14,14 +14,14 @@ build:
   tags:
     - shell
 
-test:
-  image: node:8-alpine
-  stage: test
-  script:
-    - npm install
-    - npm test
-  tags:
-    - docker
+# test:
+#   image: node:8-alpine
+#   stage: test
+#   script:
+#     - npm install
+#     - npm test
+#   tags:
+#     - docker
 
 trigger_build:
   stage: deploy
