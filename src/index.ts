@@ -72,7 +72,7 @@ wss.on('connection', async (ws, req) => {
     const cleanedQuery = cleanQuery(req.url)
     console.log('cleaned query', cleanedQuery)
 
-    const sessionId = parse(cleanedQuery)
+    const { sessionId } = parse(cleanedQuery) as { sessionId: string }
 
     console.log('got session id', sessionId)
 
