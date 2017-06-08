@@ -3,14 +3,14 @@ variables:
   PROJECT_NAME: messages
 
 stages:
-  - test
+  # - test
   - build
   - deploy
 
 build:
   stage: build
   script:
-    - docker build --build-arg GITHUB_CALLBACK=$GITHUB_CALLBACK --build-arg GITHUB_ID=$GITHUB_ID --build-arg GITHUB_SECRET=$GITHUB_SECRET -t $PROJECT_GROUP/$PROJECT_NAME:latest -t $PROJECT_GROUP/$PROJECT_NAME:$CI_JOB_ID . 
+    - docker build -t $PROJECT_GROUP/$PROJECT_NAME:latest -t $PROJECT_GROUP/$PROJECT_NAME:$CI_JOB_ID . 
   tags:
     - shell
 

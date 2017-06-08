@@ -14,7 +14,7 @@ import { ReplaySubject } from 'rxjs'
 
 const serviceEventStream = 'messageService'
 const messageChannelStream = (channelName: string) =>
-  `messageService/channel/${channelName}`
+  `messageService_channel_${channelName}`
 
 const host = 'eventstore'
 const tcpPort = '1113'
