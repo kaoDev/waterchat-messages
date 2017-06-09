@@ -3,7 +3,7 @@ import {
   USER_LOGGED_OUT,
   CHANNEL_CREATED,
   MESSAGE_RECEIVED,
-  MessageEvent,
+  ServiceEvent,
   UserLoggedOut,
   ChannelCreated,
   MessageReceived,
@@ -32,7 +32,7 @@ const authorizeServerReceivedMessage = (state: State) => (
   event.messageId.length > 0
 
 export const authorizeEvent = (state: State) => (
-  event: MessageEvent
+  event: ServiceEvent
 ): boolean => {
   switch (event.type) {
     case USER_LOGGED_IN:

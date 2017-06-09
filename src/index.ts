@@ -11,9 +11,13 @@ import {
   USER_LOGGED_IN,
   USER_LOGGED_OUT,
   MESSAGE_RECEIVED,
+  ONLINE_USERS_CHANGED,
+  OnlineUsersChanged,
+  ServiceEvent,
 } from './events/Events'
 import { createEventFromCommand } from './logic/CommandEventMapper'
 import { parse } from 'query-string'
+import { Observable } from 'rxjs/Observable'
 
 console.log('initializing message service')
 
@@ -86,11 +90,10 @@ wss.on('connection', async (ws, req) => {
 
     await dispatchServiceEvent({
       type: USER_LOGGED_IN,
-      userId: user.userId,
-      displayName: user.displayName,
+      ...user,
     })
 
-    const subscription = serviceState
+    const chatMessages: Observable<ServiceEvent> = serviceState
       .flatMap(state => state.activeChannels)
       .do(() => console.log('got new service state'))
       .filter(
@@ -101,21 +104,19 @@ wss.on('connection', async (ws, req) => {
       .distinct(channel => channel.channelId)
       .flatMap(channel => channel.messages)
       .do(m => console.log('sending message to client', m))
-      .subscribe(
-        message => ws.send(JSON.stringify(message)),
-        e => console.error('error in channel subscription', e)
-      )
 
-    serviceState
-      .flatMap(state => state.activeChannels)
-      .do(() => console.log('got new service state'))
-      .filter(
-        channel =>
-          channel.userIds.some(id => id === user.userId) ||
-          channel.channelId === PUBLIC_CHANNEL_ID
-      )
-      .distinct(channel => channel.channelId)
-      .flatMap(channel => channel.messages)
+    const onlineUsers: Observable<OnlineUsersChanged> = serviceState
+      .map(state => state.users)
+      .distinct()
+      .map(users => ({
+        type: ONLINE_USERS_CHANGED,
+        users,
+      }))
+
+    const subscription = Observable.merge(chatMessages, onlineUsers).subscribe(
+      message => ws.send(JSON.stringify(message)),
+      e => console.error('error in channel subscription', e)
+    )
 
     ws.onmessage = message => {
       try {

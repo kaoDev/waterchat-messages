@@ -1,4 +1,4 @@
-import { MessageEvent, USER_LOGGED_OUT, USER_LOGGED_IN } from '../events/Events'
+import { ServiceEvent, USER_LOGGED_OUT, USER_LOGGED_IN } from '../events/Events'
 import { State, UserConnection } from '../model/State'
 import { PUBLIC_CHANNEL_ID, ActiveChannel, Channel } from '../model/Channel'
 import { DisplayUser } from '../model/User'
@@ -18,7 +18,7 @@ export const initialState: State = Object.freeze({
 
 const reduceConnections = (
   connections: UserConnection[] = [],
-  event: MessageEvent
+  event: ServiceEvent
 ) => {
   switch (event.type) {
     case USER_LOGGED_IN:
@@ -61,15 +61,17 @@ const reduceConnections = (
 
 const reduceUsers = (nextConnections: UserConnection[]) => (
   users: DisplayUser[] = [],
-  event: MessageEvent
+  event: ServiceEvent
 ) => {
   switch (event.type) {
     case USER_LOGGED_IN:
       if (users.every(u => u.userId !== event.userId)) {
-        return users.concat({
-          displayName: event.displayName,
+        const user: DisplayUser = {
           userId: event.userId,
-        })
+          displayName: event.displayName,
+          profilePicture: event.profilePicture,
+        }
+        return users.concat(user)
       } else {
         return users
       }
@@ -87,7 +89,7 @@ const reduceUsers = (nextConnections: UserConnection[]) => (
 const reduceActiveChannels = (
   nextConnections: UserConnection[],
   inactiveChannels: Channel[]
-) => async (activeChannels: ActiveChannel[] = [], event: MessageEvent) => {
+) => async (activeChannels: ActiveChannel[] = [], event: ServiceEvent) => {
   switch (event.type) {
     case USER_LOGGED_IN:
       const newActiveChannels = await Promise.all(
@@ -122,7 +124,7 @@ const reduceActiveChannels = (
 const reduceInactiveChannels = (
   nextConnections: UserConnection[],
   activeChannels: ActiveChannel[]
-) => (inactiveChannels: Channel[] = [], event: MessageEvent) => {
+) => (inactiveChannels: Channel[] = [], event: ServiceEvent) => {
   switch (event.type) {
     case USER_LOGGED_IN:
       return inactiveChannels.filter(ch =>
@@ -140,7 +142,7 @@ const reduceInactiveChannels = (
 
 export const reduceServiceState = async (
   state: State = initialState,
-  event: MessageEvent
+  event: ServiceEvent
 ): Promise<State> => {
   const connections = reduceConnections(state.connections, event)
   const activeChannels = await reduceActiveChannels(

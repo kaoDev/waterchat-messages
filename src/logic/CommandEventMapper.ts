@@ -6,7 +6,7 @@ import {
 import {
   CHANNEL_CREATED,
   MESSAGE_RECEIVED,
-  MessageEvent,
+  ServiceEvent,
 } from '../events/Events'
 import { DisplayUser } from '../model/User'
 import * as uuid from 'uuid'
@@ -14,7 +14,7 @@ import { format } from 'date-fns'
 
 export const createEventFromCommand = (user: DisplayUser) => (
   command: MessageCommand
-): MessageEvent | undefined => {
+): ServiceEvent | undefined => {
   switch (command.type) {
     case CREATE_CHANNEL:
       const userIds = command.userIds.some(id => id === user.userId)

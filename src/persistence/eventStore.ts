@@ -2,7 +2,7 @@ import * as esClient from 'node-eventstore-client'
 import { HeartbeatInfo, TcpEndPoint } from 'node-eventstore-client'
 import * as uuid from 'uuid'
 import {
-  MessageEvent,
+  ServiceEvent,
   MESSAGE_RECEIVED,
   MessageReceived,
 } from '../events/Events'
@@ -35,7 +35,7 @@ export const createChannelSubscription = async (channelName: string) =>
 
 export const createStreamSubscription = async (
   streamName: string,
-  messageSubject: ReplaySubject<MessageEvent> = new ReplaySubject<MessageEvent>(
+  messageSubject: ReplaySubject<ServiceEvent> = new ReplaySubject<ServiceEvent>(
     500
   )
 ) => {
@@ -52,7 +52,7 @@ export const createStreamSubscription = async (
       ) {
         const parsedEvent = JSON.parse(
           event.originalEvent.data.toString()
-        ) as MessageEvent
+        ) as ServiceEvent
         messageSubject.next(parsedEvent)
       }
     }
@@ -94,7 +94,7 @@ export async function initEventStoreConnection() {
 }
 
 export async function dispatchServiceEvent(
-  event: MessageEvent,
+  event: ServiceEvent,
   channelName: string = PUBLIC_CHANNEL_ID
 ) {
   console.log('dispatching service event')
