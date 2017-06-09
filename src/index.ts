@@ -95,7 +95,6 @@ wss.on('connection', async (ws, req) => {
 
     const chatMessages: Observable<ServiceEvent> = serviceState
       .flatMap(state => state.activeChannels)
-      .do(() => console.log('got new service state'))
       .filter(
         channel =>
           channel.userIds.some(id => id === user.userId) ||
@@ -103,7 +102,6 @@ wss.on('connection', async (ws, req) => {
       )
       .distinct(channel => channel.channelId)
       .flatMap(channel => channel.messages)
-      .do(m => console.log('sending message to client', m))
 
     const onlineUsers: Observable<OnlineUsersChanged> = serviceState
       .map(state => state.users)
@@ -113,10 +111,12 @@ wss.on('connection', async (ws, req) => {
         users,
       }))
 
-    const subscription = Observable.merge(chatMessages, onlineUsers).subscribe(
-      message => ws.send(JSON.stringify(message)),
-      e => console.error('error in channel subscription', e)
-    )
+    const subscription = Observable.merge(chatMessages, onlineUsers)
+      .do(m => console.log('sending message to client', m))
+      .subscribe(
+        message => ws.send(JSON.stringify(message)),
+        e => console.error('error in channel subscription', e)
+      )
 
     ws.onmessage = message => {
       try {
