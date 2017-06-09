@@ -11,11 +11,9 @@ import {
   USER_LOGGED_IN,
   USER_LOGGED_OUT,
   MESSAGE_RECEIVED,
-  MessageEvent,
 } from './events/Events'
 import { createEventFromCommand } from './logic/CommandEventMapper'
 import { parse } from 'query-string'
-import { QueueingSubject } from 'queueing-subject'
 
 console.log('initializing message service')
 
@@ -92,9 +90,6 @@ wss.on('connection', async (ws, req) => {
       displayName: user.displayName,
     })
 
-    const userMessageQueue = new QueueingSubject<MessageEvent>()
-    userMessageQueue.subscribe(message => ws.send(JSON.stringify(message)))
-
     const subscription = serviceState
       .flatMap(state => state.activeChannels)
       .do(() => console.log('got new service state'))
@@ -106,8 +101,9 @@ wss.on('connection', async (ws, req) => {
       .distinct(channel => channel.channelId)
       .flatMap(channel => channel.messages)
       .do(m => console.log('sending message to client', m))
-      .subscribe(userMessageQueue.next, e =>
-        console.error('error in channel subscription', e)
+      .subscribe(
+        message => ws.send(JSON.stringify(message)),
+        e => console.error('error in channel subscription', e)
       )
 
     serviceState
@@ -140,7 +136,6 @@ wss.on('connection', async (ws, req) => {
     }
 
     ws.onclose = event => {
-      userMessageQueue.complete()
       subscription.unsubscribe()
       dispatchServiceEvent({
         type: USER_LOGGED_OUT,
