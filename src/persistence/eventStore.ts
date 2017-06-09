@@ -10,7 +10,7 @@ import { State } from '../model/State'
 import { PUBLIC_CHANNEL_ID } from '../model/Channel'
 import { reduceServiceState, initialState } from '../logic/StateUpdater'
 import { authorizeEvent } from '../logic/EventAuthorizer'
-import { ReplaySubject } from 'rxjs'
+import { ReplaySubject, BehaviorSubject } from 'rxjs'
 
 const serviceEventStream = 'messageService'
 const messageChannelStream = (channelName: string) =>
@@ -138,8 +138,7 @@ export async function dispatchServiceEvent(
     .catch((error: Error) => console.error(error))
 }
 
-export const serviceState = new ReplaySubject<State>(1)
-serviceState.next(initialState)
+export const serviceState = new BehaviorSubject<State>(initialState)
 
 const initStateSubscription = async () => {
   const eventStream = await createStreamSubscription(serviceEventStream)
