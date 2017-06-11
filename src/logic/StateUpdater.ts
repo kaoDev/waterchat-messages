@@ -71,7 +71,7 @@ const reduceUsers = (nextConnections: UserConnection[]) => (
           displayName: event.displayName,
           profilePicture: event.profilePicture,
         }
-        console.log('USER LOGGED IN', event, user)
+        console.log('USER LOGGED IN', user)
         return users.concat(user)
       } else {
         return users
