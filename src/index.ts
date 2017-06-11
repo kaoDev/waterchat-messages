@@ -120,16 +120,20 @@ wss.on('connection', async (ws, req) => {
 
     ws.onmessage = message => {
       try {
-        const command = JSON.parse(message.data.toString())
-        const event = createEventFromCommand(user)(command)
-        if (event !== undefined) {
-          if (event.type === MESSAGE_RECEIVED) {
-            dispatchServiceEvent(event, event.channelId)
-          } else {
-            dispatchServiceEvent(event)
-          }
+        if (message.data === 'ping') {
+          ws.pong()
         } else {
-          console.log('wrong command format', command)
+          const command = JSON.parse(message.data.toString())
+          const event = createEventFromCommand(user)(command)
+          if (event !== undefined) {
+            if (event.type === MESSAGE_RECEIVED) {
+              dispatchServiceEvent(event, event.channelId)
+            } else {
+              dispatchServiceEvent(event)
+            }
+          } else {
+            console.log('wrong command format', command)
+          }
         }
       } catch (e) {
         console.error('error on message receive', e)
