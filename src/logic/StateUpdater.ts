@@ -65,17 +65,21 @@ const reduceUsers = (nextConnections: UserConnection[]) => (
 ) => {
   switch (event.type) {
     case USER_LOGGED_IN:
+      const user: DisplayUser = {
+        userId: event.userId,
+        displayName: event.displayName,
+        profilePicture: event.profilePicture,
+      }
       if (users.every(u => u.userId !== event.userId)) {
-        const user: DisplayUser = {
-          userId: event.userId,
-          displayName: event.displayName,
-          profilePicture: event.profilePicture,
-        }
-        console.log('USER LOGGED IN', user)
-        console.log(users.concat(user))
         return users.concat(user)
       } else {
-        return users
+        return users.map(u => {
+          if (u.userId === event.userId) {
+            return user
+          } else {
+            return u
+          }
+        })
       }
     case USER_LOGGED_OUT:
       if (nextConnections.some(con => con.userId === event.userId)) {
