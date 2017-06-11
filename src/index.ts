@@ -112,7 +112,7 @@ wss.on('connection', async (ws, req) => {
       }))
 
     const subscription = Observable.merge(chatMessages, onlineUsers)
-      .do(m => console.log('sending message to client', m))
+      // .do(m => console.log('sending message to client', m))
       .subscribe(
         message => ws.send(JSON.stringify(message)),
         e => console.error('error in channel subscription', e)
