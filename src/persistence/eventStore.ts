@@ -135,6 +135,7 @@ export async function dispatchServiceEvent(
             console.error(err)
           })
       }
+      console.log('invalid event', event)
       throw new Error('Invalid Event')
     })
     .toPromise()
