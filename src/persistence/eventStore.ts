@@ -164,6 +164,7 @@ const initStateSubscription = async () => {
     })
     .subscribe(async ({ state, event }) => {
       const nextState = await reduceServiceState(state, event)
+      console.log('state update')
       serviceState.next(nextState)
     })
 }
