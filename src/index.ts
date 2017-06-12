@@ -111,17 +111,15 @@ wss.on('connection', async (ws, req) => {
         users,
       }))
 
-    const subscription = Observable.merge(chatMessages, onlineUsers)
-      // .do(m => console.log('sending message to client', m))
-      .subscribe(
-        message => ws.send(JSON.stringify(message)),
-        e => console.error('error in channel subscription', e)
-      )
+    const subscription = Observable.merge(chatMessages, onlineUsers).subscribe(
+      message => ws.send(JSON.stringify(message)),
+      e => console.error('error in channel subscription', e)
+    )
 
     ws.onmessage = message => {
       try {
         if (message.data === 'ping') {
-          ws.send('pong')
+          ws.send(JSON.stringify({ ping: 'pong' }))
         } else {
           const command = JSON.parse(message.data.toString())
           const event = createEventFromCommand(user)(command)
