@@ -48,7 +48,6 @@ export const createStreamSubscription = async (
     new Position(0, 0),
     false,
     (subscription, event) => {
-      console.log('got event from store', event.originalStreamId)
       if (event.originalStreamId.startsWith(serviceEventStream)) {
         if (
           event.originalEvent !== undefined &&
