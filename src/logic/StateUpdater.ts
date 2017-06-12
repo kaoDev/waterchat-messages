@@ -103,7 +103,7 @@ const reduceActiveChannels = (
           .filter(
             ch =>
               ch.userIds.some(id => id === event.userId) ||
-              (ch.channelId === PUBLIC_CHANNEL_ID && nextConnections.length > 0)
+              ch.channelId === PUBLIC_CHANNEL_ID
           )
           .map(async ch => ({
             ...ch,
@@ -113,9 +113,10 @@ const reduceActiveChannels = (
       return activeChannels.concat(newActiveChannels)
     case USER_LOGGED_OUT:
       return activeChannels.filter(ch => {
-        const keep = ch.userIds.some(id =>
-          nextConnections.some(con => con.userId === id)
-        )
+        const keep =
+          ch.userIds.some(id =>
+            nextConnections.some(con => con.userId === id)
+          ) || ch.channelId === PUBLIC_CHANNEL_ID
 
         return keep
       })
@@ -131,12 +132,17 @@ const reduceInactiveChannels = (
 ) => (inactiveChannels: Channel[] = [], event: ServiceEvent) => {
   switch (event.type) {
     case USER_LOGGED_IN:
-      return inactiveChannels.filter(ch =>
-        ch.userIds.every(id => id !== event.userId)
+      return inactiveChannels.filter(
+        ch =>
+          ch.userIds.every(id => id !== event.userId) &&
+          ch.channelId !== PUBLIC_CHANNEL_ID
       )
     case USER_LOGGED_OUT:
-      const newInactiveChannels = activeChannels.filter(ch =>
-        ch.userIds.every(id => nextConnections.every(con => con.userId !== id))
+      const newInactiveChannels = activeChannels.filter(
+        ch =>
+          ch.userIds.every(id =>
+            nextConnections.every(con => con.userId !== id)
+          ) && ch.channelId !== PUBLIC_CHANNEL_ID
       )
       return inactiveChannels.concat(newInactiveChannels)
     default:
