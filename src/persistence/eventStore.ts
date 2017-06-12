@@ -1,5 +1,5 @@
 import * as esClient from 'node-eventstore-client'
-import { HeartbeatInfo, TcpEndPoint, Position } from 'node-eventstore-client'
+import { HeartbeatInfo, TcpEndPoint } from 'node-eventstore-client'
 import * as uuid from 'uuid'
 import {
   ServiceEvent,
@@ -13,8 +13,8 @@ import { authorizeEvent, isServiceEvent } from '../logic/EventAuthorizer'
 import { ReplaySubject, BehaviorSubject, Observable } from 'rxjs'
 
 const serviceEventStream = 'messageService'
-const messageChannelStream = (channelName: string) =>
-  `messageService_channel_${channelName}`
+// const messageChannelStream = (channelName: string) =>
+//   `messageService_channel_${channelName}`
 
 const host = 'eventstore'
 const tcpPort = '1113'
