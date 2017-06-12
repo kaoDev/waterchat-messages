@@ -52,7 +52,7 @@ export const authorizeEvent = (state: State) => (
 export const isServiceEvent = (event: ServiceEvent) => {
   switch (event.type) {
     case MESSAGE_RECEIVED:
-      return Math.abs(differenceInHours(new Date(), event.timestamp)) < 1
+      return Math.abs(differenceInHours(new Date(), event.timestamp)) < 6
     case USER_LOGGED_IN:
     case USER_LOGGED_OUT:
     case CHANNEL_CREATED:
