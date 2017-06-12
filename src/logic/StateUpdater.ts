@@ -72,11 +72,19 @@ const reduceUsers = (nextConnections: UserConnection[]) => (
     case SERVICE_STARTED:
       return users.map(u => ({ ...u, online: false }))
     case USER_LOGGED_IN:
-      if (users.some(u => u.userId === event.userId && !u.online)) {
+      if (users.some(u => u.userId === event.userId)) {
         return users.map(
-          u => (u.userId === event.userId ? { ...u, online: true } : u)
+          u =>
+            u.userId === event.userId
+              ? {
+                  userId: u.userId,
+                  online: true,
+                  displayName: event.displayName,
+                  profilePicture: event.profilePicture,
+                }
+              : u
         )
-      } else if (users.every(u => u.userId !== event.userId)) {
+      } else {
         return users.concat({
           userId: event.userId,
           displayName: event.displayName,
