@@ -11,6 +11,7 @@ import {
   UserLoggedIn,
 } from '../events/Events'
 import { State } from '../model/State'
+import { differenceInHours } from 'date-fns'
 
 const authorizeUserLoggedInEvent = (state: State) => (event: UserLoggedIn) =>
   true
@@ -50,10 +51,11 @@ export const authorizeEvent = (state: State) => (
 
 export const isServiceEvent = (event: ServiceEvent) => {
   switch (event.type) {
+    case MESSAGE_RECEIVED:
+      return Math.abs(differenceInHours(new Date(), event.timestamp)) < 1
     case USER_LOGGED_IN:
     case USER_LOGGED_OUT:
     case CHANNEL_CREATED:
-    case MESSAGE_RECEIVED:
     case SERVICE_STARTED:
       return true
     default:
