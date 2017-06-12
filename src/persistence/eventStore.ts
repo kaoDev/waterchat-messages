@@ -40,12 +40,16 @@ export const createStreamSubscription = async (
     5000
   )
 ) => {
+  console.log('create event-store stream')
+
   const connection = await initEventStoreConnection()
 
   const storeSubscription = await connection.subscribeToAllFrom(
     new Position(0, 0),
     false,
     (subscription, event) => {
+      console.log('got event from store')
+
       if (
         event.originalEvent !== undefined &&
         event.originalEvent.data !== undefined
@@ -58,6 +62,9 @@ export const createStreamSubscription = async (
           messageSubject.next(parsedEvent)
         }
       }
+    },
+    () => {
+      console.log('all events digested live streaming now')
     }
   )
 
@@ -157,6 +164,7 @@ export const getServiceEventStream = async () => {
 
 const initStateSubscription = async () => {
   const eventStream = await getServiceEventStream()
+  console.log('init event store sub')
 
   eventStream
     .withLatestFrom(serviceState, (event, state) => {
