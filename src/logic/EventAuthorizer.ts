@@ -11,14 +11,11 @@ import {
 } from '../events/Events'
 import { State } from '../model/State'
 
-const stateHasRegisteredUser = ({ users }: State) => (userId: string) =>
-  users.some(({ userId: id }) => userId === id)
-
 const authorizeUserLoggedInEvent = (state: State) => (event: UserLoggedIn) =>
   true
 
 const authorizeUserLoggedOutEvent = (state: State) => (event: UserLoggedOut) =>
-  stateHasRegisteredUser(state)(event.userId)
+  true
 
 const authorizeChannelCreated = (state: State) => (event: ChannelCreated) =>
   state.activeChannels.every(c => c.channelId !== event.channelId) &&
