@@ -121,7 +121,7 @@ wss.on('connection', async (ws, req) => {
     ws.onmessage = message => {
       try {
         if (message.data === 'ping') {
-          ws.pong('pong')
+          ws.send('pong')
         } else {
           const command = JSON.parse(message.data.toString())
           const event = createEventFromCommand(user)(command)
