@@ -49,17 +49,18 @@ export const createStreamSubscription = async (
     false,
     (subscription, event) => {
       console.log('got event from store', event.originalStreamId)
+      if (event.originalStreamId.startsWith(serviceEventStream)) {
+        if (
+          event.originalEvent !== undefined &&
+          event.originalEvent.data !== undefined
+        ) {
+          const parsedEvent = JSON.parse(
+            event.originalEvent.data.toString()
+          ) as ServiceEvent
 
-      if (
-        event.originalEvent !== undefined &&
-        event.originalEvent.data !== undefined
-      ) {
-        const parsedEvent = JSON.parse(
-          event.originalEvent.data.toString()
-        ) as ServiceEvent
-
-        if (isServiceEvent(parsedEvent)) {
-          messageSubject.next(parsedEvent)
+          if (isServiceEvent(parsedEvent)) {
+            messageSubject.next(parsedEvent)
+          }
         }
       }
     },
