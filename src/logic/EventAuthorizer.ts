@@ -47,3 +47,15 @@ export const authorizeEvent = (state: State) => (
       return false
   }
 }
+
+export const isServiceEvent = (event: ServiceEvent) => {
+  switch (event.type) {
+    case USER_LOGGED_IN:
+    case USER_LOGGED_OUT:
+    case CHANNEL_CREATED:
+    case MESSAGE_RECEIVED:
+      return true
+    default:
+      return false
+  }
+}

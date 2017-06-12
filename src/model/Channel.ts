@@ -1,4 +1,4 @@
-import { ReplaySubject } from 'rxjs/ReplaySubject'
+import { Observable } from 'rxjs/Observable'
 import { MessageReceived } from '../events/Events'
 
 export type ChannelId = {
@@ -12,5 +12,5 @@ export type Channel = ChannelId & {
 }
 
 export type ActiveChannel = Channel & {
-  readonly messages: ReplaySubject<MessageReceived>
+  readonly messages: Observable<MessageReceived>
 }

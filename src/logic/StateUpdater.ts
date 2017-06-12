@@ -116,9 +116,7 @@ const reduceActiveChannels = (
         const keep = ch.userIds.some(id =>
           nextConnections.some(con => con.userId === id)
         )
-        if (!keep) {
-          ch.messages.complete()
-        }
+
         return keep
       })
 

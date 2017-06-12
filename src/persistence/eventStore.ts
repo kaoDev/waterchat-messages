@@ -1,5 +1,5 @@
 import * as esClient from 'node-eventstore-client'
-import { HeartbeatInfo, TcpEndPoint } from 'node-eventstore-client'
+import { HeartbeatInfo, TcpEndPoint, Position } from 'node-eventstore-client'
 import * as uuid from 'uuid'
 import {
   ServiceEvent,
@@ -9,8 +9,8 @@ import {
 import { State } from '../model/State'
 import { PUBLIC_CHANNEL_ID } from '../model/Channel'
 import { reduceServiceState, initialState } from '../logic/StateUpdater'
-import { authorizeEvent } from '../logic/EventAuthorizer'
-import { ReplaySubject, BehaviorSubject } from 'rxjs'
+import { authorizeEvent, isServiceEvent } from '../logic/EventAuthorizer'
+import { ReplaySubject, BehaviorSubject, Observable } from 'rxjs'
 
 const serviceEventStream = 'messageService'
 const messageChannelStream = (channelName: string) =>
@@ -28,22 +28,22 @@ const esConnection = esClient.createConnection(
   `tcp://${host}:${tcpPort}`
 )
 
-export const createChannelSubscription = async (channelName: string) =>
-  (await createStreamSubscription(
-    messageChannelStream(channelName)
-  )) as ReplaySubject<MessageReceived>
+export const createChannelSubscription = async (channelName: string) => {
+  const stream = await getServiceEventStream()
+  return stream.filter(
+    e => e.type === MESSAGE_RECEIVED && e.channelId === channelName
+  ) as Observable<MessageReceived>
+}
 
 export const createStreamSubscription = async (
-  streamName: string,
   messageSubject: ReplaySubject<ServiceEvent> = new ReplaySubject<ServiceEvent>(
-    500
+    5000
   )
 ) => {
   const connection = await initEventStoreConnection()
 
-  const storeSubscription = await connection.subscribeToStreamFrom(
-    streamName,
-    0,
+  const storeSubscription = await connection.subscribeToAllFrom(
+    new Position(0, 0),
     false,
     (subscription, event) => {
       if (
@@ -53,7 +53,10 @@ export const createStreamSubscription = async (
         const parsedEvent = JSON.parse(
           event.originalEvent.data.toString()
         ) as ServiceEvent
-        messageSubject.next(parsedEvent)
+
+        if (isServiceEvent(parsedEvent)) {
+          messageSubject.next(parsedEvent)
+        }
       }
     }
   )
@@ -140,8 +143,19 @@ export async function dispatchServiceEvent(
 
 export const serviceState = new BehaviorSubject<State>(initialState)
 
+let serviceEvent$: Observable<ServiceEvent> | null = null
+export const getServiceEventStream = async () => {
+  if (serviceEvent$ !== null) {
+    return serviceEvent$
+  } else {
+    serviceEvent$ = await createStreamSubscription()
+
+    return serviceEvent$
+  }
+}
+
 const initStateSubscription = async () => {
-  const eventStream = await createStreamSubscription(serviceEventStream)
+  const eventStream = await getServiceEventStream()
 
   eventStream
     .withLatestFrom(serviceState, (event, state) => {
