@@ -35,6 +35,24 @@ export const createChannelSubscription = async (channelName: string) => {
     .do(e => console.log(e.type)) as Observable<MessageReceived>
 }
 
+const digetStoreEvent = (messageSubject: ReplaySubject<ServiceEvent>) => (
+  subscription: any,
+  event: esClient.ResolvedEvent
+) => {
+  if (
+    event.originalEvent !== undefined &&
+    event.originalEvent.data !== undefined
+  ) {
+    const parsedEvent = JSON.parse(
+      event.originalEvent.data.toString()
+    ) as ServiceEvent
+
+    if (isServiceEvent(parsedEvent)) {
+      messageSubject.next(parsedEvent)
+    }
+  }
+}
+
 export const createStreamSubscription = async (
   messageSubject: ReplaySubject<ServiceEvent> = new ReplaySubject<ServiceEvent>(
     5000
@@ -44,26 +62,26 @@ export const createStreamSubscription = async (
 
   const connection = await initEventStoreConnection()
 
-  const storeSubscription = await connection.subscribeToStreamFrom(
+  const digest = digetStoreEvent(messageSubject)
+
+  const storeCatchUpSubscription = await connection.subscribeToStreamFrom(
     serviceEventStream,
     0,
     false,
-    (subscription, event) => {
-      if (
-        event.originalEvent !== undefined &&
-        event.originalEvent.data !== undefined
-      ) {
-        const parsedEvent = JSON.parse(
-          event.originalEvent.data.toString()
-        ) as ServiceEvent
-
-        if (isServiceEvent(parsedEvent)) {
-          messageSubject.next(parsedEvent)
-        }
-      }
-    },
-    () => {
+    digest,
+    async sub => {
       console.log('all events digested live streaming now')
+      sub.stop()
+
+      const liveSubscription = await connection.subscribeToStream(
+        serviceEventStream,
+        false,
+        digest
+      )
+
+      messageSubject.subscribe(undefined, undefined, () => {
+        liveSubscription.unsubscribe()
+      })
     },
     () => {
       console.log('subscription dropped')
@@ -71,7 +89,7 @@ export const createStreamSubscription = async (
   )
 
   messageSubject.subscribe(undefined, undefined, () => {
-    storeSubscription.stop()
+    storeCatchUpSubscription.stop()
   })
 
   return messageSubject
