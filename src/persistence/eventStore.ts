@@ -4,6 +4,7 @@ import * as uuid from 'uuid'
 import {
   ServiceEvent,
   MESSAGE_RECEIVED,
+  SERVICE_STARTED,
   MessageReceived,
 } from '../events/Events'
 import { State } from '../model/State'
@@ -13,8 +14,6 @@ import { authorizeEvent, isServiceEvent } from '../logic/EventAuthorizer'
 import { ReplaySubject, BehaviorSubject, Observable } from 'rxjs'
 
 const serviceEventStream = 'messageService'
-// const messageChannelStream = (channelName: string) =>
-//   `messageService_channel_${channelName}`
 
 const host = 'eventstore'
 const tcpPort = '1113'
@@ -63,7 +62,7 @@ export const createStreamSubscription = async (
   const connection = await initEventStoreConnection()
 
   const digest = digetStoreEvent(messageSubject)
-
+  await dispatchServiceEvent({ type: SERVICE_STARTED })
   const storeCatchUpSubscription = await connection.subscribeToStreamFrom(
     serviceEventStream,
     0,

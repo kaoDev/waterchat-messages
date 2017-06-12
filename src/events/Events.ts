@@ -7,6 +7,7 @@ export const USER_LOGGED_OUT = 'USER_LOGGED_OUT'
 export const MESSAGE_RECEIVED = 'MESSAGE_RECEIVED'
 export const CHANNEL_CREATED = 'CHANNEL_CREATED'
 export const ONLINE_USERS_CHANGED = 'ONLINE_USERS_CHANGED'
+export const SERVICE_STARTED = 'SERVICE_STARTED'
 
 export type MessageEventType =
   | typeof USER_LOGGED_IN
@@ -36,9 +37,14 @@ export type OnlineUsersChanged = {
   readonly users: DisplayUser[]
 }
 
+export type ServiceStarted = {
+  type: typeof SERVICE_STARTED
+}
+
 export type ServiceEvent =
   | UserLoggedIn
   | UserLoggedOut
   | MessageReceived
   | ChannelCreated
   | OnlineUsersChanged
+  | ServiceStarted

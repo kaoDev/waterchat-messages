@@ -3,6 +3,7 @@ import {
   USER_LOGGED_OUT,
   CHANNEL_CREATED,
   MESSAGE_RECEIVED,
+  SERVICE_STARTED,
   ServiceEvent,
   UserLoggedOut,
   ChannelCreated,
@@ -40,6 +41,8 @@ export const authorizeEvent = (state: State) => (
       return authorizeChannelCreated(state)(event)
     case MESSAGE_RECEIVED:
       return authorizeServerReceivedMessage(state)(event)
+    case SERVICE_STARTED:
+      return true
     default:
       return false
   }
@@ -51,6 +54,7 @@ export const isServiceEvent = (event: ServiceEvent) => {
     case USER_LOGGED_OUT:
     case CHANNEL_CREATED:
     case MESSAGE_RECEIVED:
+    case SERVICE_STARTED:
       return true
     default:
       return false

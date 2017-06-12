@@ -1,4 +1,9 @@
-import { ServiceEvent, USER_LOGGED_OUT, USER_LOGGED_IN } from '../events/Events'
+import {
+  ServiceEvent,
+  USER_LOGGED_OUT,
+  USER_LOGGED_IN,
+  SERVICE_STARTED,
+} from '../events/Events'
 import { State, UserConnection } from '../model/State'
 import { PUBLIC_CHANNEL_ID, ActiveChannel, Channel } from '../model/Channel'
 import { DisplayUser } from '../model/User'
@@ -21,6 +26,8 @@ const reduceConnections = (
   event: ServiceEvent
 ) => {
   switch (event.type) {
+    case SERVICE_STARTED:
+      return connections.map(con => ({ ...con, connectionCount: 0 }))
     case USER_LOGGED_IN:
       if (connections.some(con => con.userId === event.userId)) {
         return connections.map(con => {
@@ -42,18 +49,16 @@ const reduceConnections = (
         ])
       }
     case USER_LOGGED_OUT:
-      return connections
-        .map(con => {
-          if (con.userId === event.userId) {
-            return {
-              ...con,
-              connectionCount: con.connectionCount - 1,
-            }
-          } else {
-            return con
+      return connections.map(con => {
+        if (con.userId === event.userId) {
+          return {
+            ...con,
+            connectionCount: Math.max(con.connectionCount - 1, 0),
           }
-        })
-        .filter(con => con.connectionCount <= 0)
+        } else {
+          return con
+        }
+      })
     default:
       return connections
   }
@@ -64,28 +69,30 @@ const reduceUsers = (nextConnections: UserConnection[]) => (
   event: ServiceEvent
 ) => {
   switch (event.type) {
+    case SERVICE_STARTED:
+      return users.map(u => ({ ...u, online: false }))
     case USER_LOGGED_IN:
-      const user: DisplayUser = {
-        userId: event.userId,
-        displayName: event.displayName,
-        profilePicture: event.profilePicture,
-      }
-      if (users.every(u => u.userId !== event.userId)) {
-        return users.concat(user)
-      } else {
-        return users.map(u => {
-          if (u.userId === event.userId) {
-            return user
-          } else {
-            return u
-          }
+      if (users.some(u => u.userId === event.userId && !u.online)) {
+        return users.map(
+          u => (u.userId === event.userId ? { ...u, online: true } : u)
+        )
+      } else if (users.every(u => u.userId !== event.userId)) {
+        return users.concat({
+          userId: event.userId,
+          displayName: event.displayName,
+          profilePicture: event.profilePicture,
+          online: true,
         })
       }
     case USER_LOGGED_OUT:
-      if (nextConnections.some(con => con.userId === event.userId)) {
-        return users
-      } else {
-        return users.filter(u => u.userId !== event.userId)
+      if (
+        nextConnections.some(
+          con => con.userId === event.userId && con.connectionCount === 0
+        )
+      ) {
+        return users.map(
+          u => (u.userId === event.userId ? { ...u, online: false } : u)
+        )
       }
     default:
       return users

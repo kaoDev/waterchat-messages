@@ -14,4 +14,8 @@ export type SessionId = {
   readonly sessionId: string
 }
 
-export type DisplayUser = UserId & UserDisplayName & ProfilePicture
+export type Online = {
+  readonly online: boolean
+}
+
+export type DisplayUser = UserId & UserDisplayName & ProfilePicture & Online
