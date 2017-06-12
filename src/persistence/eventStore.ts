@@ -44,22 +44,21 @@ export const createStreamSubscription = async (
 
   const connection = await initEventStoreConnection()
 
-  const storeSubscription = await connection.subscribeToAllFrom(
-    new Position(0, 0),
+  const storeSubscription = await connection.subscribeToStreamFrom(
+    serviceEventStream,
+    0,
     false,
     (subscription, event) => {
-      if (event.originalStreamId.startsWith(serviceEventStream)) {
-        if (
-          event.originalEvent !== undefined &&
-          event.originalEvent.data !== undefined
-        ) {
-          const parsedEvent = JSON.parse(
-            event.originalEvent.data.toString()
-          ) as ServiceEvent
+      if (
+        event.originalEvent !== undefined &&
+        event.originalEvent.data !== undefined
+      ) {
+        const parsedEvent = JSON.parse(
+          event.originalEvent.data.toString()
+        ) as ServiceEvent
 
-          if (isServiceEvent(parsedEvent)) {
-            messageSubject.next(parsedEvent)
-          }
+        if (isServiceEvent(parsedEvent)) {
+          messageSubject.next(parsedEvent)
         }
       }
     },
@@ -127,14 +126,12 @@ export async function dispatchServiceEvent(
     .map(state => authorizeEvent(state)(event))
     .flatMap(valid => {
       if (valid) {
-        let streamName = serviceEventStream
-        switch (event.type) {
-          case MESSAGE_RECEIVED:
-            streamName = messageChannelStream(channelName)
-            break
-        }
         return esConnection
-          .appendToStream(streamName, esClient.expectedVersion.any, storeEvent)
+          .appendToStream(
+            serviceEventStream,
+            esClient.expectedVersion.any,
+            storeEvent
+          )
           .then(result => {
             console.log('Stored event:', eventId)
             console.log(
