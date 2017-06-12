@@ -48,7 +48,7 @@ export const createStreamSubscription = async (
     new Position(0, 0),
     false,
     (subscription, event) => {
-      console.log('got event from store')
+      console.log('got event from store', event.originalStreamId)
 
       if (
         event.originalEvent !== undefined &&
@@ -65,6 +65,9 @@ export const createStreamSubscription = async (
     },
     () => {
       console.log('all events digested live streaming now')
+    },
+    () => {
+      console.log('subscription dropped')
     }
   )
 
