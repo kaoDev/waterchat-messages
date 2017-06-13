@@ -140,7 +140,7 @@ wss.on('connection', async (ws, req) => {
           }
         )
 
-      ws.onopen = event => {
+      ws.onopen = async event => {
         if (user !== undefined) {
           await dispatchServiceEvent({
             type: USER_LOGGED_IN,
