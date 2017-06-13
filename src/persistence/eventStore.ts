@@ -189,13 +189,7 @@ const initStateSubscription = async () => {
     })
     .subscribe(async ({ state, event }) => {
       const nextState = await reduceServiceState(state, event)
-      console.log('state update')
-
-      const u = state.users.find(u => u.displayName === null)
-
-      if (u !== undefined) {
-        console.log('found corrupt user', u)
-      }
+      console.log('state update', 'users', nextState.users.length)
 
       serviceState.next(nextState)
     })
