@@ -75,12 +75,6 @@ wss.on('connection', async (ws, req) => {
   let subscription: Subscription | undefined
   let user: DisplayUser | undefined
 
-  const userAlive = Observable.interval(10000)
-    .map(() => ws.readyState)
-    .do(status => console.log('status', status, 'CLOSED = ', ws.CLOSED))
-    .map(status => status !== ws.CLOSED)
-    .filter(state => state !== true)
-
   try {
     console.log('new connection')
     await eventStoreConnectionPromise
@@ -95,6 +89,30 @@ wss.on('connection', async (ws, req) => {
     user = JSON.parse(await rp.get(`http://micro-auth:3000/user/${sessionId}`))
 
     if (user !== undefined) {
+      const userAlive = Observable.interval(10000)
+        .map(() => ws.readyState)
+        .do(status => console.log('status', status, 'CLOSED = ', ws.CLOSED))
+        .distinct()
+        .flatMap(async status => {
+          if (user !== undefined) {
+            if (status === ws.OPEN) {
+              await dispatchServiceEvent({
+                type: USER_LOGGED_IN,
+                ...user,
+              })
+            } else if (status === ws.CLOSED) {
+              await dispatchServiceEvent({
+                type: USER_LOGGED_OUT,
+                userId: user.userId,
+              })
+            }
+          }
+
+          return status
+        })
+        .map(status => status !== ws.CLOSED)
+        .filter(state => state !== true)
+
       console.log('got user', user)
 
       const chatMessages: Observable<ServiceEvent> = serviceState
@@ -132,22 +150,13 @@ wss.on('connection', async (ws, req) => {
                 userId: user.userId,
               })
               user = undefined
-              if (ws.readyState !== ws.CLOSED || ws.readyState !== ws.CLOSING) {
-                ws.close()
-                ws.terminate()
-              }
+            }
+            if (ws.readyState !== ws.CLOSED || ws.readyState !== ws.CLOSING) {
+              ws.close()
+              ws.terminate()
             }
           }
         )
-
-      ws.onopen = async event => {
-        if (user !== undefined) {
-          await dispatchServiceEvent({
-            type: USER_LOGGED_IN,
-            ...user,
-          })
-        }
-      }
 
       ws.onmessage = message => {
         try {
