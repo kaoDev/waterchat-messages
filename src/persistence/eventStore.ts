@@ -184,11 +184,13 @@ const initStateSubscription = async () => {
   console.log('init event store sub')
 
   eventStream
-    .withLatestFrom(serviceState, (event, state) => {
+    .zip(serviceState, (event, state) => {
       return { state, event }
     })
-    .subscribe(async ({ state, event }) => {
-      const nextState = await reduceServiceState(state, event)
+    .flatMap(({ state, event }) => {
+      return Observable.fromPromise(reduceServiceState(state, event))
+    })
+    .subscribe(nextState => {
       console.log('state update', 'users', nextState.users.length)
 
       serviceState.next(nextState)
