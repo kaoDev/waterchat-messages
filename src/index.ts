@@ -76,9 +76,8 @@ wss.on('connection', async (ws, req) => {
   let user: DisplayUser | undefined
   let loggedIn = false
 
-  const userAlive = Observable.interval(10000)
+  const userAlive = Observable.interval(1000)
     .map(() => ws.readyState)
-    .do(status => console.log('status', status, 'CLOSED = ', ws.CLOSED))
     .do(async status => {
       if (user !== undefined) {
         if (!loggedIn && status === ws.OPEN) {
