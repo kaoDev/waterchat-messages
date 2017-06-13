@@ -97,11 +97,6 @@ wss.on('connection', async (ws, req) => {
     if (user !== undefined) {
       console.log('got user', user)
 
-      await dispatchServiceEvent({
-        type: USER_LOGGED_IN,
-        ...user,
-      })
-
       const chatMessages: Observable<ServiceEvent> = serviceState
         .flatMap(state => state.activeChannels)
         .filter(
@@ -139,10 +134,20 @@ wss.on('connection', async (ws, req) => {
               user = undefined
               if (ws.readyState !== ws.CLOSED || ws.readyState !== ws.CLOSING) {
                 ws.close()
+                ws.terminate()
               }
             }
           }
         )
+
+      ws.onopen = event => {
+        if (user !== undefined) {
+          await dispatchServiceEvent({
+            type: USER_LOGGED_IN,
+            ...user,
+          })
+        }
+      }
 
       ws.onmessage = message => {
         try {
