@@ -74,7 +74,31 @@ const wss = new Server({
 wss.on('connection', async (ws, req) => {
   let subscription: Subscription | undefined
   let user: DisplayUser | undefined
+  let loggedIn = false
 
+  const userAlive = Observable.interval(10000)
+    .map(() => ws.readyState)
+    .do(status => console.log('status', status, 'CLOSED = ', ws.CLOSED))
+    .do(async status => {
+      if (user !== undefined) {
+        if (!loggedIn && status === ws.OPEN) {
+          await dispatchServiceEvent({
+            type: USER_LOGGED_IN,
+            ...user,
+          })
+          loggedIn = true
+        } else if (loggedIn && status === ws.CLOSED) {
+          await dispatchServiceEvent({
+            type: USER_LOGGED_OUT,
+            userId: user.userId,
+          })
+          user = undefined
+        }
+      }
+    })
+    .distinct()
+    .map(status => status !== ws.CLOSED)
+    .filter(state => state !== true)
   try {
     console.log('new connection')
     await eventStoreConnectionPromise
@@ -89,30 +113,6 @@ wss.on('connection', async (ws, req) => {
     user = JSON.parse(await rp.get(`http://micro-auth:3000/user/${sessionId}`))
 
     if (user !== undefined) {
-      const userAlive = Observable.interval(10000)
-        .map(() => ws.readyState)
-        .do(status => console.log('status', status, 'CLOSED = ', ws.CLOSED))
-        .distinct()
-        .flatMap(async status => {
-          if (user !== undefined) {
-            if (status === ws.OPEN) {
-              await dispatchServiceEvent({
-                type: USER_LOGGED_IN,
-                ...user,
-              })
-            } else if (status === ws.CLOSED) {
-              await dispatchServiceEvent({
-                type: USER_LOGGED_OUT,
-                userId: user.userId,
-              })
-            }
-          }
-
-          return status
-        })
-        .map(status => status !== ws.CLOSED)
-        .filter(state => state !== true)
-
       console.log('got user', user)
 
       const chatMessages: Observable<ServiceEvent> = serviceState
@@ -144,7 +144,7 @@ wss.on('connection', async (ws, req) => {
           () => {
             console.log(' observable completed, closing socket')
 
-            if (user !== undefined) {
+            if (loggedIn && user !== undefined) {
               dispatchServiceEvent({
                 type: USER_LOGGED_OUT,
                 userId: user.userId,
@@ -184,13 +184,9 @@ wss.on('connection', async (ws, req) => {
     console.error('unhandled error in websocket code', e)
     ws.close(500, 'internal server error')
     if (subscription) {
-      console.log('finally unsubscribe')
-
       subscription.unsubscribe()
     }
-    if (user !== undefined) {
-      console.log('finally logout')
-
+    if (loggedIn && user !== undefined) {
       dispatchServiceEvent({
         type: USER_LOGGED_OUT,
         userId: user.userId,
