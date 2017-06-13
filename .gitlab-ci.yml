@@ -26,6 +26,7 @@ build:
 trigger_build:
   stage: deploy
   script:
+    - docker service rm ${PROJECT_GROUP}_${PROJECT_NAME}
     - "curl -X POST -F token=57ac25fd7c00d7282208c92486b851 -F ref=master https://office.cap3.de:52203/api/v4/projects/286/trigger/pipeline"
   tags:
     - shell
