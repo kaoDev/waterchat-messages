@@ -11,7 +11,6 @@ import {
   UserLoggedIn,
 } from '../events/Events'
 import { State } from '../model/State'
-import { differenceInHours } from 'date-fns'
 
 const authorizeUserLoggedInEvent = (state: State) => (event: UserLoggedIn) =>
   true
