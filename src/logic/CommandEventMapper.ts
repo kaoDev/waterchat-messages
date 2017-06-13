@@ -29,7 +29,7 @@ export const createEventFromCommand = (user: DisplayUser) => (
       return {
         type: MESSAGE_RECEIVED,
         channelId: command.channelId,
-        content: command.content,
+        content: command.content.trim(),
         messageId: uuid.v4(),
         timestamp: format(new Date()),
         userId: user.userId,
