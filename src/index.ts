@@ -126,6 +126,8 @@ wss.on('connection', async (ws, req) => {
           message => ws.send(JSON.stringify(message)),
           e => console.error('error in channel subscription', e),
           () => {
+            console.log(' observable completed, closing socket')
+
             if (user !== undefined) {
               dispatchServiceEvent({
                 type: USER_LOGGED_OUT,
@@ -165,6 +167,8 @@ wss.on('connection', async (ws, req) => {
       }
 
       ws.onclose = event => {
+        console.log('socket closed, logging out')
+
         if (subscription) {
           subscription.unsubscribe()
           subscription = undefined
@@ -182,10 +186,16 @@ wss.on('connection', async (ws, req) => {
     console.error('unhandled error in websocket code', e)
     ws.close(500, 'internal server error')
   } finally {
+    console.log('socket connection finally block')
+
     if (subscription) {
+      console.log('finally unsubscribe')
+
       subscription.unsubscribe()
     }
     if (user !== undefined) {
+      console.log('finally logout')
+
       dispatchServiceEvent({
         type: USER_LOGGED_OUT,
         userId: user.userId,
