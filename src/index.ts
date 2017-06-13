@@ -185,9 +185,6 @@ wss.on('connection', async (ws, req) => {
   } catch (e) {
     console.error('unhandled error in websocket code', e)
     ws.close(500, 'internal server error')
-  } finally {
-    console.log('socket connection finally block')
-
     if (subscription) {
       console.log('finally unsubscribe')
 
