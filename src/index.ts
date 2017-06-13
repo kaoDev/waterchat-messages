@@ -77,6 +77,7 @@ wss.on('connection', async (ws, req) => {
 
   const userAlive = Observable.interval(10000)
     .map(() => ws.readyState)
+    .do(status => console.log('status', status, 'CLOSED = ', ws.CLOSED))
     .map(status => status !== ws.CLOSED)
     .filter(state => state !== true)
 
