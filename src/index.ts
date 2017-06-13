@@ -111,6 +111,7 @@ wss.on('connection', async (ws, req) => {
         )
         .distinct(channel => channel.channelId)
         .flatMap(channel => channel.messages)
+        .filter(message => message.content.trim().length > 0)
         .distinct(message => message.messageId)
 
       const onlineUsers: Observable<OnlineUsersChanged> = serviceState

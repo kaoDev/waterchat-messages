@@ -27,7 +27,7 @@ const authorizeServerReceivedMessage = (state: State) => (
   event: MessageReceived
 ) =>
   state.activeChannels.some(c => c.channelId === event.channelId) &&
-  event.content.length > 0 &&
+  event.content.trim().length > 0 &&
   event.messageId.length > 0
 
 export const authorizeEvent = (state: State) => (
