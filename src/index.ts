@@ -164,22 +164,6 @@ wss.on('connection', async (ws, req) => {
           console.error('error on message receive', e)
         }
       }
-
-      ws.onclose = event => {
-        console.log('socket closed, logging out')
-
-        if (subscription) {
-          subscription.unsubscribe()
-          subscription = undefined
-        }
-        if (user !== undefined) {
-          dispatchServiceEvent({
-            type: USER_LOGGED_OUT,
-            userId: user.userId,
-          })
-          user = undefined
-        }
-      }
     }
   } catch (e) {
     console.error('unhandled error in websocket code', e)
