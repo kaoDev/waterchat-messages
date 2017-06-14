@@ -113,6 +113,8 @@ wss.on('connection', async (ws, req) => {
       const chatMessages: Observable<ServiceEvent> = serviceState
         .do(state => {
           console.log(
+            'inactive channels count',
+            state.inactiveChannels.length,
             'active channels in state',
             state.activeChannels.length,
             'with user',
