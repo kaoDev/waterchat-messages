@@ -26,8 +26,10 @@ const esConnection = esClient.createConnection(
   `tcp://${host}:${tcpPort}`
 )
 
-export const createChannelSubscription = async (channelName: string) => {
-  const stream = await getServiceEventStream()
+export const createChannelSubscription = (channelName: string) => {
+  const stream = Observable.fromPromise(getServiceEventStream()).flatMap(
+    stream => stream
+  )
   return stream.filter(
     e => e.type === MESSAGE_RECEIVED && e.channelId === channelName
   ) as Observable<MessageReceived>
@@ -183,8 +185,8 @@ const initStateSubscription = async () => {
     .zip(serviceState, (event, state) => {
       return { state, event }
     })
-    .flatMap(({ state, event }) => {
-      return Observable.fromPromise(reduceServiceState(state, event))
+    .map(({ state, event }) => {
+      return reduceServiceState(state, event)
     })
     .subscribe(nextState => {
       console.log('state update', 'users', nextState.users.length)

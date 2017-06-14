@@ -111,30 +111,28 @@ const reduceUsers = (nextConnections: UserConnection[]) => (
 const reduceActiveChannels = (
   nextConnections: UserConnection[],
   inactiveChannels: Channel[]
-) => async (activeChannels: ActiveChannel[] = [], event: ServiceEvent) => {
+) => (activeChannels: ActiveChannel[] = [], event: ServiceEvent) => {
   switch (event.type) {
     case USER_LOGGED_IN:
-      const newActiveChannels = await Promise.all(
-        inactiveChannels
-          .filter(
-            ch =>
-              ch.userIds.some(id => id === event.userId) ||
-              ch.channelId === PUBLIC_CHANNEL_ID
-          )
-          .map(async ch => ({
-            ...ch,
-            messages: await createChannelSubscription(ch.channelId),
-          }))
-      )
+      const newActiveChannels = inactiveChannels
+        .filter(
+          ch =>
+            ch.userIds.some(id => id === event.userId) ||
+            ch.channelId === PUBLIC_CHANNEL_ID
+        )
+        .map(ch => ({
+          ...ch,
+          messages: createChannelSubscription(ch.channelId),
+        }))
+
       return activeChannels.concat(newActiveChannels)
     case USER_LOGGED_OUT:
       return activeChannels.filter(ch => {
-        const keep =
+        return (
           ch.userIds.some(id =>
             nextConnections.some(con => con.userId === id)
           ) || ch.channelId === PUBLIC_CHANNEL_ID
-
-        return keep
+        )
       })
 
     default:
@@ -166,25 +164,26 @@ const reduceInactiveChannels = (
             nextConnections.every(con => con.userId !== id)
           ) && ch.channelId !== PUBLIC_CHANNEL_ID
       )
+
       return inactiveChannels.concat(newInactiveChannels)
     default:
       return inactiveChannels
   }
 }
 
-export const reduceServiceState = async (
+export const reduceServiceState = (
   state: State = initialState,
   event: ServiceEvent
-): Promise<State> => {
+): State => {
   const connections = reduceConnections(state.connections, event)
   const inactiveChannels = reduceInactiveChannels(
     connections,
     state.activeChannels
   )(state.inactiveChannels, event)
-  const activeChannels = await reduceActiveChannels(
-    connections,
-    inactiveChannels
-  )(state.activeChannels, event)
+  const activeChannels = reduceActiveChannels(connections, inactiveChannels)(
+    state.activeChannels,
+    event
+  )
   return {
     connections,
     activeChannels,
