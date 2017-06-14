@@ -1,6 +1,6 @@
 import { DisplayUser, UserId } from '../model/User'
 import { Message } from '../model/Message'
-import { Channel } from '../model/Channel'
+import { ChannelId, ChannelUsers } from '../model/Channel'
 
 export const USER_LOGGED_IN = 'USER_LOGGED_IN'
 export const USER_LOGGED_OUT = 'USER_LOGGED_OUT'
@@ -28,9 +28,10 @@ export type MessageReceived = Message & {
   readonly type: typeof MESSAGE_RECEIVED
 }
 
-export type ChannelCreated = Channel & {
-  readonly type: typeof CHANNEL_CREATED
-}
+export type ChannelCreated = ChannelId &
+  ChannelUsers & {
+    readonly type: typeof CHANNEL_CREATED
+  }
 
 export type OnlineUsersChanged = {
   readonly type: typeof ONLINE_USERS_CHANGED

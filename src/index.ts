@@ -113,19 +113,17 @@ wss.on('connection', async (ws, req) => {
       const chatMessages: Observable<ServiceEvent> = serviceState
         .do(state => {
           console.log(
-            'inactive channels count',
-            state.inactiveChannels.length,
             'active channels in state',
-            state.activeChannels.length,
+            state.channels.length,
             'with user',
-            state.activeChannels.filter(
+            state.channels.filter(
               ch =>
                 ch.channelId === PUBLIC_CHANNEL_ID ||
                 ch.userIds.some(id => id === user.userId)
             ).length
           )
         })
-        .flatMap(state => state.activeChannels)
+        .flatMap(state => state.channels)
         .filter(
           channel =>
             channel.userIds.some(id => id === user.userId) ||

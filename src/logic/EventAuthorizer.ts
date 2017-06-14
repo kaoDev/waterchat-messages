@@ -19,13 +19,12 @@ const authorizeUserLoggedOutEvent = (state: State) => (event: UserLoggedOut) =>
   true
 
 const authorizeChannelCreated = (state: State) => (event: ChannelCreated) =>
-  state.activeChannels.every(c => c.channelId !== event.channelId) &&
-  state.inactiveChannels.every(c => c.channelId !== event.channelId)
+  state.channels.every(c => c.channelId !== event.channelId)
 
 const authorizeServerReceivedMessage = (state: State) => (
   event: MessageReceived
 ) =>
-  state.activeChannels.some(c => c.channelId === event.channelId) &&
+  state.channels.some(c => c.channelId === event.channelId) &&
   event.content.trim().length > 0 &&
   event.messageId.length > 0
 

@@ -5,12 +5,13 @@ export type ChannelId = {
   readonly channelId: string
 }
 
-export const PUBLIC_CHANNEL_ID = 'public'
-
-export type Channel = ChannelId & {
+export type ChannelUsers = {
   readonly userIds: string[]
 }
 
-export type ActiveChannel = Channel & {
-  readonly messages: Observable<MessageReceived>
-}
+export const PUBLIC_CHANNEL_ID = 'public'
+
+export type Channel = ChannelId &
+  ChannelUsers & {
+    readonly messages: Observable<MessageReceived>
+  }

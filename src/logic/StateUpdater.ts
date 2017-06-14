@@ -6,18 +6,18 @@ import {
   CHANNEL_CREATED,
 } from '../events/Events'
 import { State, UserConnection } from '../model/State'
-import { PUBLIC_CHANNEL_ID, ActiveChannel, Channel } from '../model/Channel'
+import { PUBLIC_CHANNEL_ID, Channel } from '../model/Channel'
 import { DisplayUser } from '../model/User'
 import { createChannelSubscription } from '../persistence/eventStore'
 
 export const initialState: State = Object.freeze({
   connections: [],
   users: [],
-  activeChannels: [],
-  inactiveChannels: [
+  channels: [
     {
       channelId: PUBLIC_CHANNEL_ID,
       userIds: [],
+      messages: createChannelSubscription(PUBLIC_CHANNEL_ID),
     },
   ],
 })
@@ -108,78 +108,23 @@ const reduceUsers = (nextConnections: UserConnection[]) => (
   }
 }
 
-const reduceActiveChannels = (
-  nextConnections: UserConnection[],
-  inactiveChannels: Channel[]
-) => (activeChannels: ActiveChannel[] = [], event: ServiceEvent) => {
-  switch (event.type) {
-    case USER_LOGGED_IN:
-      const newActiveChannels = inactiveChannels
-        .filter(
-          ch =>
-            ch.userIds.some(id => id === event.userId) ||
-            ch.channelId === PUBLIC_CHANNEL_ID
-        )
-        .map(ch => ({
-          ...ch,
-          messages: createChannelSubscription(ch.channelId),
-        }))
-
-      return activeChannels.concat(newActiveChannels)
-    case USER_LOGGED_OUT:
-      return activeChannels.filter(ch => {
-        return (
-          ch.userIds.some(id =>
-            nextConnections.some(con => con.userId === id)
-          ) || ch.channelId === PUBLIC_CHANNEL_ID
-        )
-      })
-
-    default:
-      return activeChannels
-  }
-}
-
-const reduceInactiveChannels = (
-  nextConnections: UserConnection[],
-  activeChannels: ActiveChannel[]
-) => (inactiveChannels: Channel[] = [], event: ServiceEvent) => {
+const reduceChannels = (
+  channels: Channel[] = [],
+  event: ServiceEvent
+): Channel[] => {
   switch (event.type) {
     case CHANNEL_CREATED: {
-      const nextChannels = [
-        ...inactiveChannels,
+      return [
+        ...channels,
         {
           channelId: event.channelId,
           userIds: event.userIds,
+          messages: createChannelSubscription(event.channelId),
         },
       ]
-
-      console.log(
-        'last',
-        inactiveChannels,
-        'next inactive channels',
-        nextChannels
-      )
-
-      return nextChannels
     }
-    case USER_LOGGED_IN:
-      return inactiveChannels.filter(
-        ch =>
-          ch.userIds.every(id => id !== event.userId) &&
-          ch.channelId !== PUBLIC_CHANNEL_ID
-      )
-    case USER_LOGGED_OUT:
-      const newInactiveChannels = activeChannels.filter(
-        ch =>
-          ch.userIds.every(id =>
-            nextConnections.every(con => con.userId !== id)
-          ) && ch.channelId !== PUBLIC_CHANNEL_ID
-      )
-
-      return inactiveChannels.concat(newInactiveChannels)
     default:
-      return inactiveChannels
+      return channels
   }
 }
 
@@ -188,18 +133,10 @@ export const reduceServiceState = (
   event: ServiceEvent
 ): State => {
   const connections = reduceConnections(state.connections, event)
-  const inactiveChannels = reduceInactiveChannels(
-    connections,
-    state.activeChannels
-  )(state.inactiveChannels, event)
-  const activeChannels = reduceActiveChannels(connections, inactiveChannels)(
-    state.activeChannels,
-    event
-  )
+
   return {
     connections,
-    activeChannels,
-    inactiveChannels,
+    channels: reduceChannels(state.channels, event),
     users: reduceUsers(connections)(state.users, event),
   }
 }
