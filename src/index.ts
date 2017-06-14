@@ -11,6 +11,8 @@ import {
   USER_LOGGED_IN,
   USER_LOGGED_OUT,
   ONLINE_USERS_CHANGED,
+  AVAILABLE_CHANNELS_CHANGED,
+  AvailableChannelsChanged,
   OnlineUsersChanged,
   ServiceEvent,
 } from './events/Events'
@@ -142,7 +144,24 @@ wss.on('connection', async (ws, req) => {
           users,
         }))
 
-      Observable.merge(chatMessages, onlineUsers)
+      const channels: Observable<AvailableChannelsChanged> = serviceState
+        .map(state => state.channels)
+        .distinct()
+        .map(channels =>
+          channels
+            .filter(
+              ch =>
+                ch.channelId === PUBLIC_CHANNEL_ID ||
+                ch.userIds.some(id => id === user.userId)
+            )
+            .map(ch => ch.channelId)
+        )
+        .map(channelIds => ({
+          type: AVAILABLE_CHANNELS_CHANGED,
+          channelIds,
+        }))
+
+      Observable.merge(chatMessages, onlineUsers, channels)
         .takeUntil(userAlive)
         .subscribe(
           message => ws.send(JSON.stringify(message)),
