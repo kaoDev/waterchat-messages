@@ -10,7 +10,6 @@ import { PUBLIC_CHANNEL_ID } from './model/Channel'
 import {
   USER_LOGGED_IN,
   USER_LOGGED_OUT,
-  MESSAGE_RECEIVED,
   ONLINE_USERS_CHANGED,
   OnlineUsersChanged,
   ServiceEvent,
@@ -18,7 +17,6 @@ import {
 import { createEventFromCommand } from './logic/CommandEventMapper'
 import { parse } from 'query-string'
 import { Observable } from 'rxjs/Observable'
-import { Subscription } from 'rxjs/Subscription'
 
 console.log('initializing message service')
 
@@ -72,32 +70,8 @@ const wss = new Server({
 })
 
 wss.on('connection', async (ws, req) => {
-  let subscription: Subscription | undefined
-  let user: DisplayUser | undefined
   let loggedIn = false
 
-  const userAlive = Observable.interval(1000)
-    .map(() => ws.readyState)
-    .do(async status => {
-      if (user !== undefined) {
-        if (!loggedIn && status === ws.OPEN) {
-          await dispatchServiceEvent({
-            type: USER_LOGGED_IN,
-            ...user,
-          })
-          loggedIn = true
-        } else if (loggedIn && status === ws.CLOSED) {
-          await dispatchServiceEvent({
-            type: USER_LOGGED_OUT,
-            userId: user.userId,
-          })
-          user = undefined
-        }
-      }
-    })
-    .distinct()
-    .map(status => status !== ws.CLOSED)
-    .filter(state => state !== true)
   try {
     console.log('new connection')
     await eventStoreConnectionPromise
@@ -109,18 +83,39 @@ wss.on('connection', async (ws, req) => {
 
     console.log('got session id', sessionId)
 
-    user = JSON.parse(await rp.get(`http://micro-auth:3000/user/${sessionId}`))
+    const user: DisplayUser | undefined = JSON.parse(
+      await rp.get(`http://micro-auth:3000/user/${sessionId}`)
+    )
 
     if (user !== undefined) {
       console.log('got user', user)
+      const userAlive = Observable.interval(1000)
+        .map(() => ws.readyState)
+        .do(async status => {
+          if (!loggedIn && status === ws.OPEN) {
+            loggedIn = true
+            await dispatchServiceEvent({
+              type: USER_LOGGED_IN,
+              ...user,
+            })
+          } else if (loggedIn && status === ws.CLOSED) {
+            loggedIn = false
+            await dispatchServiceEvent({
+              type: USER_LOGGED_OUT,
+              userId: user.userId,
+            })
+          }
+        })
+        .distinct()
+        .map(status => status !== ws.CLOSED)
+        .filter(state => state !== true)
 
       const chatMessages: Observable<ServiceEvent> = serviceState
         .flatMap(state => state.activeChannels)
         .filter(
           channel =>
-            channel.userIds.some(
-              id => user !== undefined && id === user.userId
-            ) || channel.channelId === PUBLIC_CHANNEL_ID
+            channel.userIds.some(id => id === user.userId) ||
+            channel.channelId === PUBLIC_CHANNEL_ID
         )
         .distinct(channel => channel.channelId)
         .flatMap(channel => channel.messages)
@@ -135,23 +130,15 @@ wss.on('connection', async (ws, req) => {
           users,
         }))
 
-      subscription = Observable.merge(chatMessages, onlineUsers)
+      Observable.merge(chatMessages, onlineUsers)
         .takeUntil(userAlive)
         .subscribe(
           message => ws.send(JSON.stringify(message)),
           e => console.error('error in channel subscription', e),
           () => {
             console.log(' observable completed, closing socket')
-
-            if (loggedIn && user !== undefined) {
-              dispatchServiceEvent({
-                type: USER_LOGGED_OUT,
-                userId: user.userId,
-              })
-              user = undefined
-            }
             if (ws.readyState !== ws.CLOSED || ws.readyState !== ws.CLOSING) {
-              ws.close()
+              ws.close(200)
               ws.terminate()
             }
           }
@@ -161,15 +148,11 @@ wss.on('connection', async (ws, req) => {
         try {
           if (message.data === 'ping') {
             ws.send(JSON.stringify({ ping: 'pong' }))
-          } else if (user !== undefined) {
+          } else {
             const command = JSON.parse(message.data.toString())
             const event = createEventFromCommand(user)(command)
             if (event !== undefined) {
-              if (event.type === MESSAGE_RECEIVED) {
-                dispatchServiceEvent(event, event.channelId)
-              } else {
-                dispatchServiceEvent(event)
-              }
+              dispatchServiceEvent(event)
             } else {
               console.log('wrong command format', command)
             }
@@ -182,14 +165,6 @@ wss.on('connection', async (ws, req) => {
   } catch (e) {
     console.error('unhandled error in websocket code', e)
     ws.close(500, 'internal server error')
-    if (subscription) {
-      subscription.unsubscribe()
-    }
-    if (loggedIn && user !== undefined) {
-      dispatchServiceEvent({
-        type: USER_LOGGED_OUT,
-        userId: user.userId,
-      })
-    }
+    ws.terminate()
   }
 })

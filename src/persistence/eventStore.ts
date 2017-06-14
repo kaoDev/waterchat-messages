@@ -8,7 +8,6 @@ import {
   MessageReceived,
 } from '../events/Events'
 import { State } from '../model/State'
-import { PUBLIC_CHANNEL_ID } from '../model/Channel'
 import { reduceServiceState, initialState } from '../logic/StateUpdater'
 import { authorizeEvent, isServiceEvent } from '../logic/EventAuthorizer'
 import { ReplaySubject, BehaviorSubject, Observable } from 'rxjs'
@@ -122,10 +121,7 @@ export async function initEventStoreConnection() {
   return esConnection
 }
 
-export async function dispatchServiceEvent(
-  event: ServiceEvent,
-  channelName: string = PUBLIC_CHANNEL_ID
-) {
+export async function dispatchServiceEvent(event: ServiceEvent) {
   console.log('dispatching service event')
   const eventId = event.type === MESSAGE_RECEIVED ? event.messageId : uuid.v4()
   const storeEvent = esClient.createJsonEventData(
