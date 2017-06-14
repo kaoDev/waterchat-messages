@@ -41,7 +41,10 @@ export type OnlineUsersChanged = {
 
 export type AvailableChannelsChanged = {
   readonly type: typeof AVAILABLE_CHANNELS_CHANGED
-  readonly channelIds: string[]
+  readonly channels: {
+    readonly channelId: string
+    readonly userIds: string[]
+  }[]
 }
 
 export type ServiceStarted = {

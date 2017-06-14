@@ -154,11 +154,14 @@ wss.on('connection', async (ws, req) => {
                 ch.channelId === PUBLIC_CHANNEL_ID ||
                 ch.userIds.some(id => id === user.userId)
             )
-            .map(ch => ch.channelId)
+            .map(({ userIds, channelId }) => ({
+              userIds,
+              channelId,
+            }))
         )
-        .map(channelIds => ({
+        .map(channels => ({
           type: AVAILABLE_CHANNELS_CHANGED,
-          channelIds,
+          channels,
         }))
 
       Observable.merge(chatMessages, onlineUsers, channels)
