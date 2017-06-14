@@ -146,14 +146,20 @@ const reduceInactiveChannels = (
 ) => (inactiveChannels: Channel[] = [], event: ServiceEvent) => {
   switch (event.type) {
     case CHANNEL_CREATED: {
-      const nextChannels = inactiveChannels.concat([
+      const nextChannels = [
+        ...inactiveChannels,
         {
           channelId: event.channelId,
           userIds: event.userIds,
         },
-      ])
+      ]
 
-      console.log('next inactive channels', nextChannels)
+      console.log(
+        'last',
+        inactiveChannels,
+        'next inactive channels',
+        nextChannels
+      )
 
       return nextChannels
     }
