@@ -28,9 +28,9 @@ const esConnection = esClient.createConnection(
 
 export const createChannelSubscription = async (channelName: string) => {
   const stream = await getServiceEventStream()
-  return stream
-    .filter(e => e.type === MESSAGE_RECEIVED && e.channelId === channelName)
-    .do(e => console.log(e.type)) as Observable<MessageReceived>
+  return stream.filter(
+    e => e.type === MESSAGE_RECEIVED && e.channelId === channelName
+  ) as Observable<MessageReceived>
 }
 
 const digetStoreEvent = (messageSubject: ReplaySubject<ServiceEvent>) => (
