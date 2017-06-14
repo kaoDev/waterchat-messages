@@ -26,13 +26,15 @@ const esConnection = esClient.createConnection(
   `tcp://${host}:${tcpPort}`
 )
 
-export const createChannelSubscription = (channelName: string) => {
+export const createChannelSubscription = (
+  channelName: string
+): Observable<MessageReceived> => {
   const stream = Observable.fromPromise(getServiceEventStream()).flatMap(
     stream => stream
   )
   return stream.filter(
     e => e.type === MESSAGE_RECEIVED && e.channelId === channelName
-  ) as Observable<MessageReceived>
+  )
 }
 
 const digetStoreEvent = (messageSubject: ReplaySubject<ServiceEvent>) => (

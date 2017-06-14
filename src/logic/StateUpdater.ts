@@ -13,13 +13,7 @@ import { createChannelSubscription } from '../persistence/eventStore'
 export const initialState: State = Object.freeze({
   connections: [],
   users: [],
-  channels: [
-    {
-      channelId: PUBLIC_CHANNEL_ID,
-      userIds: [],
-      messages: createChannelSubscription(PUBLIC_CHANNEL_ID),
-    },
-  ],
+  channels: [],
 })
 
 const reduceConnections = (
@@ -113,6 +107,19 @@ const reduceChannels = (
   event: ServiceEvent
 ): Channel[] => {
   switch (event.type) {
+    case SERVICE_STARTED:
+      if (!channels.some(ch => ch.channelId === PUBLIC_CHANNEL_ID)) {
+        return [
+          ...channels,
+          {
+            channelId: PUBLIC_CHANNEL_ID,
+            userIds: [],
+            messages: createChannelSubscription(PUBLIC_CHANNEL_ID),
+          },
+        ]
+      } else {
+        return channels
+      }
     case CHANNEL_CREATED: {
       return [
         ...channels,
