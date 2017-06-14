@@ -3,6 +3,7 @@ import {
   USER_LOGGED_OUT,
   USER_LOGGED_IN,
   SERVICE_STARTED,
+  CHANNEL_CREATED,
 } from '../events/Events'
 import { State, UserConnection } from '../model/State'
 import { PUBLIC_CHANNEL_ID, ActiveChannel, Channel } from '../model/Channel'
@@ -146,6 +147,12 @@ const reduceInactiveChannels = (
   activeChannels: ActiveChannel[]
 ) => (inactiveChannels: Channel[] = [], event: ServiceEvent) => {
   switch (event.type) {
+    case CHANNEL_CREATED: {
+      return inactiveChannels.concat({
+        channelId: event.channelId,
+        userIds: event.userIds,
+      })
+    }
     case USER_LOGGED_IN:
       return inactiveChannels.filter(
         ch =>
@@ -170,17 +177,18 @@ export const reduceServiceState = async (
   event: ServiceEvent
 ): Promise<State> => {
   const connections = reduceConnections(state.connections, event)
+  const inactiveChannels = reduceInactiveChannels(
+    connections,
+    state.activeChannels
+  )(state.inactiveChannels, event)
   const activeChannels = await reduceActiveChannels(
     connections,
-    state.inactiveChannels
+    inactiveChannels
   )(state.activeChannels, event)
   return {
     connections,
     activeChannels,
-    inactiveChannels: reduceInactiveChannels(connections, state.activeChannels)(
-      state.inactiveChannels,
-      event
-    ),
+    inactiveChannels,
     users: reduceUsers(connections)(state.users, event),
   }
 }
