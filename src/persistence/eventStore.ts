@@ -190,6 +190,12 @@ const initStateSubscription = async () => {
     })
     .subscribe(nextState => {
       console.log('state update', 'users', nextState.users.length)
+      console.log(
+        'state update',
+        'channel count (inactive, active)',
+        nextState.inactiveChannels.length,
+        nextState.activeChannels.length
+      )
 
       serviceState.next(nextState)
     })
