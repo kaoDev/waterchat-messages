@@ -10,7 +10,9 @@ stages:
 build:
   stage: build
   script:
+    - docker pull 10.0.0.75:5000/$PROJECT_GROUP/$PROJECT_NAME
     - docker build -t $PROJECT_GROUP/$PROJECT_NAME:latest -t $PROJECT_GROUP/$PROJECT_NAME:$CI_JOB_ID . 
+    - docker push 10.0.0.75:5000/$PROJECT_GROUP/$PROJECT_NAME
   tags:
     - shell
 
